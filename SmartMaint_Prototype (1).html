@@ -1,0 +1,768 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SmartMaint AI</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --navy: #1e3a5f; --teal: #2d7d9a; --mint: #3cb8a0; --sky: #e8f4f8;
+  --white: #ffffff; --offwhite: #f7f9fb; --border: #dde6ed;
+  --text: #2c3e50; --muted: #7f8c99;
+  --red: #c0392b; --amber: #d68910; --green: #1e8449;
+  --red-bg: #fdecea; --amber-bg: #fef9e7; --green-bg: #eafaf1;
+}
+body { font-family:'Segoe UI',system-ui,sans-serif; background:var(--offwhite); color:var(--text); display:flex; min-height:100vh; font-size:14px; line-height:1.5; }
+
+/* sidebar */
+#sidebar { width:210px; background:var(--navy); min-height:100vh; position:fixed; top:0; left:0; display:flex; flex-direction:column; z-index:200; }
+.logo { padding:20px 18px 16px; border-bottom:1px solid rgba(255,255,255,.1); }
+.logo h1 { color:var(--mint); font-size:17px; font-weight:700; }
+.logo p  { color:rgba(255,255,255,.4); font-size:11px; margin-top:2px; }
+nav { flex:1; padding:10px 0; }
+nav a { display:flex; align-items:center; gap:10px; padding:10px 18px; color:rgba(255,255,255,.65); text-decoration:none; font-size:13px; cursor:pointer; border-left:3px solid transparent; transition:background .15s,color .15s; }
+nav a:hover  { background:rgba(255,255,255,.07); color:#fff; }
+nav a.active { background:rgba(255,255,255,.1); color:#fff; border-left-color:var(--mint); }
+nav a .ico { font-size:15px; width:20px; text-align:center; }
+.sidebar-footer { padding:14px 18px; border-top:1px solid rgba(255,255,255,.08); font-size:11px; color:rgba(255,255,255,.35); }
+.online-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--mint); margin-right:5px; vertical-align:middle; }
+
+/* main */
+#main { margin-left:210px; flex:1; display:flex; flex-direction:column; min-height:100vh; }
+#topbar { background:var(--white); border-bottom:1px solid var(--border); padding:13px 24px; display:flex; align-items:center; justify-content:space-between; position:sticky; top:0; z-index:100; }
+#topbar h2   { font-size:16px; font-weight:600; color:var(--navy); }
+#topbar .sub { font-size:11px; color:var(--muted); margin-top:1px; }
+.topbar-r    { display:flex; align-items:center; gap:10px; }
+.alert-chip  { background:var(--red-bg); color:var(--red); border-radius:20px; padding:3px 10px; font-size:11px; font-weight:600; }
+.avatar      { width:32px; height:32px; border-radius:50%; background:var(--teal); color:#fff; display:flex; align-items:center; justify-content:center; font-size:13px; font-weight:700; }
+
+/* pages */
+.page { display:none; padding:24px; }
+.page.active { display:block; }
+
+/* kpi row */
+.kpi-row { display:grid; grid-template-columns:repeat(4,1fr); gap:14px; margin-bottom:22px; }
+.kpi { background:var(--white); border:1px solid var(--border); border-radius:10px; padding:16px 18px; box-shadow:0 1px 4px rgba(0,0,0,.04); }
+.kpi .k-label { font-size:11px; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; margin-bottom:6px; }
+.kpi .k-val   { font-size:28px; font-weight:700; line-height:1; }
+.kpi .k-note  { font-size:11px; margin-top:5px; color:var(--muted); }
+.kpi .k-note.up   { color:var(--green); }
+.kpi .k-note.down { color:var(--red); }
+
+/* panels */
+.panel { background:var(--white); border:1px solid var(--border); border-radius:10px; padding:18px 20px; box-shadow:0 1px 4px rgba(0,0,0,.04); margin-bottom:18px; }
+.panel-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; }
+.panel-head h3   { font-size:14px; font-weight:600; color:var(--navy); }
+.panel-head .hint{ font-size:11px; color:var(--muted); }
+.two-col     { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+.two-col-7-5 { display:grid; grid-template-columns:7fr 5fr; gap:18px; }
+
+/* tables */
+.tbl { width:100%; border-collapse:collapse; }
+.tbl th { background:var(--sky); color:var(--navy); font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:.4px; padding:9px 12px; text-align:left; border-bottom:2px solid var(--border); }
+.tbl td { padding:10px 12px; border-bottom:1px solid var(--border); font-size:13px; }
+.tbl tr:last-child td { border-bottom:none; }
+.tbl tr:hover td { background:#f0f7fb; }
+.tbl tbody tr { cursor:pointer; }
+
+/* badges */
+.badge { display:inline-block; padding:2px 9px; border-radius:20px; font-size:11px; font-weight:600; white-space:nowrap; }
+.b-crit { background:var(--red-bg); color:var(--red); }
+.b-high { background:var(--amber-bg); color:var(--amber); }
+.b-med  { background:#eaf2ff; color:#2155a8; }
+.b-low  { background:var(--green-bg); color:var(--green); }
+.b-open   { background:#eaf2ff; color:#2155a8; }
+.b-prog   { background:var(--amber-bg); color:var(--amber); }
+.b-done   { background:var(--green-bg); color:var(--green); }
+.b-online { background:var(--green-bg); color:var(--green); }
+.b-maint  { background:var(--amber-bg); color:var(--amber); }
+.b-offline{ background:var(--red-bg); color:var(--red); }
+
+/* alerts */
+.alert-item { display:flex; gap:10px; align-items:flex-start; padding:9px 0; border-bottom:1px solid var(--border); }
+.alert-item:last-child { border-bottom:none; padding-bottom:0; }
+.alert-body .title  { font-size:13px; font-weight:600; }
+.alert-body .detail { font-size:11px; color:var(--muted); margin-top:2px; }
+
+/* sensor cards */
+.sensor-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; margin-bottom:20px; }
+.sensor-card { background:var(--white); border:1px solid var(--border); border-radius:10px; padding:16px 18px; box-shadow:0 1px 4px rgba(0,0,0,.04); }
+.sc-top  { display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; }
+.sc-name { font-size:11px; font-weight:600; color:var(--muted); text-transform:uppercase; letter-spacing:.4px; }
+.sc-asset{ font-size:11px; color:var(--muted); margin-bottom:8px; }
+.sc-val  { font-size:30px; font-weight:700; color:var(--navy); line-height:1.1; }
+.sc-unit { font-size:14px; font-weight:400; color:var(--muted); }
+.sc-bar  { height:5px; background:var(--border); border-radius:3px; margin:10px 0 5px; overflow:hidden; }
+.sc-fill { height:100%; border-radius:3px; }
+.sc-range{ display:flex; justify-content:space-between; font-size:10px; color:var(--muted); }
+
+/* buttons */
+.btn { display:inline-flex; align-items:center; gap:6px; padding:7px 14px; border-radius:7px; border:none; font-size:13px; font-weight:500; cursor:pointer; transition:background .15s; }
+.btn-primary { background:var(--navy); color:#fff; }
+.btn-primary:hover { background:var(--teal); }
+.btn-outline { background:transparent; color:var(--navy); border:1px solid var(--border); }
+.btn-outline:hover { background:var(--sky); }
+.btn-danger { background:var(--red-bg); color:var(--red); border:1px solid #f5c6c2; }
+.btn-danger:hover { background:#fad4d1; }
+.btn-sm { padding:4px 10px; font-size:12px; }
+
+/* toolbar */
+.toolbar { display:flex; gap:10px; margin-bottom:16px; align-items:center; flex-wrap:wrap; }
+.toolbar input, .toolbar select { padding:7px 12px; border:1px solid var(--border); border-radius:7px; font-size:13px; color:var(--text); background:var(--white); outline:none; }
+.toolbar input { flex:1; min-width:160px; }
+.toolbar input:focus, .toolbar select:focus { border-color:var(--teal); }
+
+/* modal */
+.modal-overlay { display:none; position:fixed; inset:0; background:rgba(20,30,45,.45); z-index:999; align-items:center; justify-content:center; }
+.modal-overlay.open { display:flex; }
+.modal { background:var(--white); border-radius:12px; width:460px; max-width:95vw; padding:28px; box-shadow:0 12px 40px rgba(0,0,0,.18); max-height:90vh; overflow-y:auto; }
+.modal h2 { font-size:17px; font-weight:700; color:var(--navy); margin-bottom:18px; }
+.modal label { display:block; font-size:12px; font-weight:600; color:var(--muted); margin-bottom:4px; margin-top:13px; text-transform:uppercase; letter-spacing:.3px; }
+.modal label:first-of-type { margin-top:0; }
+.modal input, .modal select, .modal textarea { width:100%; padding:9px 12px; border:1px solid var(--border); border-radius:7px; font-size:13px; color:var(--text); font-family:inherit; outline:none; }
+.modal input:focus, .modal select:focus, .modal textarea:focus { border-color:var(--teal); }
+.modal textarea { resize:vertical; min-height:70px; }
+.modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:22px; }
+.modal-del { margin-right:auto; }
+
+/* toast */
+#toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--navy); color:#fff; padding:10px 20px; border-radius:8px; font-size:13px; font-weight:500; z-index:9999; transition:transform .3s; pointer-events:none; box-shadow:0 4px 16px rgba(0,0,0,.25); }
+#toast.show { transform:translateX(-50%) translateY(0); }
+
+canvas { display:block; }
+
+/* report cards */
+.report-card { display:flex; align-items:center; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--border); }
+.report-card:last-child { border-bottom:none; }
+.rc-title { font-size:13px; font-weight:600; color:var(--text); }
+.rc-meta  { font-size:11px; color:var(--muted); margin-top:2px; }
+
+/* health bar */
+.hbar { display:flex; align-items:center; gap:8px; }
+.hbar-track { width:60px; height:6px; background:var(--border); border-radius:3px; overflow:hidden; }
+.hbar-fill  { height:100%; border-radius:3px; }
+</style>
+</head>
+<body>
+
+<div id="sidebar">
+  <div class="logo">
+    <h1>⚙ SmartMaint AI</h1>
+    <p>Predictive Maintenance Platform</p>
+  </div>
+  <nav id="nav">
+    <a class="active" onclick="go('dashboard',this)"><span class="ico">📊</span> Dashboard</a>
+    <a onclick="go('sensors',this)"><span class="ico">📡</span> Sensors</a>
+    <a onclick="go('workorders',this)"><span class="ico">🔧</span> Work Orders</a>
+    <a onclick="go('assets',this)"><span class="ico">🏭</span> Assets</a>
+    <a onclick="go('reports',this)"><span class="ico">📄</span> Reports</a>
+  </nav>
+  <div class="sidebar-footer">
+    <span class="online-dot"></span> System online &nbsp;·&nbsp; <span id="sb-count">42</span> assets active
+  </div>
+</div>
+
+<div id="main">
+  <div id="topbar">
+    <div>
+      <h2 id="page-title">Dashboard</h2>
+      <div class="sub" id="page-sub">Live overview · Last updated just now</div>
+    </div>
+    <div class="topbar-r">
+      <span class="alert-chip" id="alert-chip">3 active alerts</span>
+      <div class="avatar">M</div>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="page active" id="page-dashboard">
+    <div class="kpi-row">
+      <div class="kpi"><div class="k-label">Assets Online</div><div class="k-val" style="color:var(--green)" id="kpi-online">42</div><div class="k-note">out of <span id="kpi-total">48</span> total</div></div>
+      <div class="kpi"><div class="k-label">Active Alerts</div><div class="k-val" style="color:var(--red)">3</div><div class="k-note down">2 critical, 1 high</div></div>
+      <div class="kpi"><div class="k-label">Open Work Orders</div><div class="k-val" style="color:var(--amber)" id="kpi-wo">5</div><div class="k-note" id="kpi-wo-note">2 in progress</div></div>
+      <div class="kpi"><div class="k-label">Avg Health Score</div><div class="k-val" style="color:var(--teal)" id="kpi-health">79%</div><div class="k-note up">↑ up from last week</div></div>
+    </div>
+    <div class="two-col-7-5">
+      <div class="panel">
+        <div class="panel-head"><h3>Fleet Health Trend</h3><span class="hint" id="chart-hint">Average asset health · last 30 days</span></div>
+        <canvas id="vib-chart" height="170"></canvas>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h3>Recent Alerts</h3></div>
+        <div id="alerts-list"></div>
+      </div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Equipment at Risk</h3><span class="hint">ML predictions · next 30 days</span></div>
+      <table class="tbl"><thead><tr><th>Asset</th><th>Issue Predicted</th><th>Risk</th><th>Est. Date</th><th>Suggested Action</th></tr></thead>
+      <tbody id="risk-tbody"></tbody></table>
+    </div>
+  </div>
+
+  <!-- SENSORS -->
+  <div class="page" id="page-sensors">
+    <div class="sensor-grid" id="sensor-grid"></div>
+    <div class="panel">
+      <div class="panel-head"><h3>24-Hour History — CNC Mill #3 Vibration</h3><span class="hint">mm/s · red line = threshold</span></div>
+      <canvas id="sensor-chart" height="180"></canvas>
+    </div>
+  </div>
+
+  <!-- WORK ORDERS -->
+  <div class="page" id="page-workorders">
+    <div class="toolbar">
+      <input type="text" placeholder="Search work orders…" oninput="filterWO()" id="wo-search">
+      <select onchange="filterWO()" id="wo-status-f"><option value="">All Status</option><option>Open</option><option>In Progress</option><option>Done</option></select>
+      <button class="btn btn-primary" onclick="openWO(null)">+ New Work Order</button>
+    </div>
+    <div class="panel" style="padding:0;overflow:hidden;">
+      <table class="tbl"><thead><tr><th>ID</th><th>Asset</th><th>Issue</th><th>Priority</th><th>Status</th><th>Assigned To</th><th>Due Date</th></tr></thead>
+      <tbody id="wo-body"></tbody></table>
+    </div>
+  </div>
+
+  <!-- ASSETS -->
+  <div class="page" id="page-assets">
+    <div class="toolbar">
+      <input type="text" placeholder="Search assets…" oninput="filterAssets()" id="asset-search">
+      <select onchange="filterAssets()" id="asset-status-f"><option value="">All Status</option><option>Online</option><option>Maintenance</option><option>Offline</option></select>
+      <button class="btn btn-primary" onclick="openAsset(null)">+ Add Asset</button>
+    </div>
+    <div class="panel" style="padding:0;overflow:hidden;">
+      <table class="tbl"><thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Location</th><th>Status</th><th>Health</th><th>Last Check</th></tr></thead>
+      <tbody id="asset-body"></tbody></table>
+    </div>
+  </div>
+
+  <!-- REPORTS -->
+  <div class="page" id="page-reports">
+    <div class="two-col">
+      <div class="panel"><div class="panel-head"><h3>Monthly Maintenance Costs</h3><span class="hint">Last 6 months</span></div><canvas id="cost-chart" height="180"></canvas></div>
+      <div class="panel"><div class="panel-head"><h3>Alerts by Category</h3><span class="hint">This month</span></div><canvas id="donut-chart" height="180"></canvas><div id="donut-legend" style="margin-top:12px;"></div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Saved Reports</h3></div>
+      <div class="report-card"><div><div class="rc-title">Monthly Maintenance Summary — March 2026</div><div class="rc-meta">PDF · Generated Apr 1, 2026</div></div><button class="btn btn-outline btn-sm" onclick="toast('Download started')">⬇ Download</button></div>
+      <div class="report-card"><div><div class="rc-title">Equipment Health Report — Q1 2026</div><div class="rc-meta">PDF · Generated Mar 31, 2026</div></div><button class="btn btn-outline btn-sm" onclick="toast('Download started')">⬇ Download</button></div>
+      <div class="report-card"><div><div class="rc-title">ML Model Performance — March 2026</div><div class="rc-meta">PDF · Generated Mar 28, 2026</div></div><button class="btn btn-outline btn-sm" onclick="toast('Download started')">⬇ Download</button></div>
+      <div class="report-card"><div><div class="rc-title">Downtime Analysis — February 2026</div><div class="rc-meta">CSV · Generated Mar 1, 2026</div></div><button class="btn btn-outline btn-sm" onclick="toast('Download started')">⬇ Download</button></div>
+    </div>
+  </div>
+</div>
+
+<!-- WORK ORDER MODAL -->
+<div class="modal-overlay" id="wo-modal">
+  <div class="modal">
+    <h2 id="wo-modal-title">New Work Order</h2>
+    <label>Asset</label><select id="wo-asset"></select>
+    <label>Issue / Description</label><textarea id="wo-issue" placeholder="Describe the problem…"></textarea>
+    <label>Priority</label>
+    <select id="wo-priority"><option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option></select>
+    <label>Status</label>
+    <select id="wo-status"><option selected>Open</option><option>In Progress</option><option>Done</option></select>
+    <label>Assigned To</label><input id="wo-tech" placeholder="Technician name (optional)">
+    <label>Due Date</label><input type="date" id="wo-due">
+    <div class="modal-actions">
+      <button class="btn btn-danger modal-del" id="wo-del-btn" onclick="deleteWO()" style="display:none">Delete</button>
+      <button class="btn btn-outline" onclick="closeModal('wo-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveWO()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ASSET MODAL -->
+<div class="modal-overlay" id="asset-modal">
+  <div class="modal">
+    <h2 id="asset-modal-title">Add Asset</h2>
+    <label>Asset Name</label><input id="a-name" placeholder="e.g. CNC Mill #4">
+    <label>Type</label><input id="a-type" placeholder="e.g. CNC Machine, Compressor, Pump…">
+    <label>Location</label><input id="a-loc" placeholder="e.g. Floor A, Basement…">
+    <label>Status</label>
+    <select id="a-status"><option selected>Online</option><option>Maintenance</option><option>Offline</option></select>
+    <label>Health Score (0–100)</label><input type="number" id="a-health" min="0" max="100" placeholder="e.g. 85">
+    <label>Last Inspection Date</label><input type="date" id="a-date">
+    <div class="modal-actions">
+      <button class="btn btn-danger modal-del" id="a-del-btn" onclick="deleteAsset()" style="display:none">Delete</button>
+      <button class="btn btn-outline" onclick="closeModal('asset-modal')">Cancel</button>
+      <button class="btn btn-primary" onclick="saveAsset()">Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// ── DATA (persisted in localStorage) ─────────────────────────────
+const DEFAULT_WO = [
+  {id:'WO-101',asset:'CNC Mill #3',    issue:'Bearing making noise — needs replacement',  priority:'Critical',status:'Open',        tech:'J. Torres',due:'2026-04-05'},
+  {id:'WO-102',asset:'Compressor A2',  issue:'Unusual vibration during startup',           priority:'High',   status:'In Progress', tech:'M. Chen',  due:'2026-04-08'},
+  {id:'WO-103',asset:'Pump Station #5',issue:'Pressure lower than normal — check seals',  priority:'High',   status:'Open',        tech:'',         due:'2026-04-14'},
+  {id:'WO-104',asset:'Conveyor Belt B1',issue:'Motor drawing too much current',            priority:'Medium', status:'Open',        tech:'',         due:'2026-04-22'},
+  {id:'WO-105',asset:'Industrial Fan F7',issue:'Belt tension looks off — routine check',  priority:'Low',    status:'In Progress', tech:'K. Singh', due:'2026-04-28'},
+];
+const DEFAULT_ASSETS = [
+  {id:'A-001',name:'CNC Mill #1',       type:'CNC Machine',loc:'Floor A',   status:'Online',     health:94,date:'2026-03-15'},
+  {id:'A-002',name:'CNC Mill #2',       type:'CNC Machine',loc:'Floor A',   status:'Online',     health:88,date:'2026-03-20'},
+  {id:'A-003',name:'CNC Mill #3',       type:'CNC Machine',loc:'Floor B',   status:'Online',     health:41,date:'2026-02-28'},
+  {id:'A-004',name:'Compressor A1',     type:'Compressor', loc:'Utility Rm',status:'Online',     health:87,date:'2026-03-18'},
+  {id:'A-005',name:'Compressor A2',     type:'Compressor', loc:'Utility Rm',status:'Online',     health:52,date:'2026-03-05'},
+  {id:'A-006',name:'Conveyor Belt B1',  type:'Conveyor',   loc:'Floor B',   status:'Online',     health:68,date:'2026-03-22'},
+  {id:'A-007',name:'Pump Station #5',   type:'Pump',       loc:'Basement',  status:'Online',     health:63,date:'2026-03-12'},
+  {id:'A-008',name:'Industrial Fan F7', type:'Fan',        loc:'Roof',      status:'Maintenance',health:76,date:'2026-03-10'},
+  {id:'A-009',name:'Hydraulic Press H2',type:'Press',      loc:'Floor C',   status:'Online',     health:82,date:'2026-03-25'},
+  {id:'A-010',name:'Boiler Unit B2',    type:'Boiler',     loc:'Basement',  status:'Offline',    health:0, date:'2026-01-20'},
+];
+
+// load saved data or fall back to defaults
+let workOrders = JSON.parse(localStorage.getItem('sm_workorders') || 'null') || DEFAULT_WO;
+let assets     = JSON.parse(localStorage.getItem('sm_assets')     || 'null') || DEFAULT_ASSETS;
+
+// persist any change to localStorage
+function save() {
+  localStorage.setItem('sm_workorders', JSON.stringify(workOrders));
+  localStorage.setItem('sm_assets',     JSON.stringify(assets));
+  // keep counters above the highest existing IDs so new ones never clash
+  const maxWO    = workOrders.reduce((m,w)=>Math.max(m, parseInt(w.id.replace('WO-',''))||0), 0);
+  const maxAsset = assets.reduce((m,a)=>Math.max(m, parseInt(a.id.replace('A-',''))||0), 0);
+  woCounter    = Math.max(woCounter,    maxWO    + 1);
+  assetCounter = Math.max(assetCounter, maxAsset + 1);
+}
+// ── AI-DERIVED DATA (auto-computed from assets) ───────────────────
+// Maps asset type → likely failure mode and action, for realistic predictions
+const typeFailures = {
+  'CNC Machine': [{issue:'Spindle bearing wear',    action:'Inspect and replace spindle bearing'},
+                  {issue:'Tool changer malfunction', action:'Lubricate and test tool changer'}],
+  'Compressor':  [{issue:'Rotor imbalance',          action:'Schedule balancing check'},
+                  {issue:'Valve degradation',         action:'Inspect inlet/outlet valves'}],
+  'Conveyor':    [{issue:'Belt wear / misalignment',  action:'Realign belt and check tension'},
+                  {issue:'Motor overload',             action:'Check load and motor current'}],
+  'Pump':        [{issue:'Seal leak',                 action:'Inspect and replace seals'},
+                  {issue:'Impeller erosion',           action:'Pull pump for impeller inspection'}],
+  'Fan':         [{issue:'Belt or bearing wear',      action:'Check belt tension and bearings'},
+                  {issue:'Blade imbalance',            action:'Inspect blades for damage'}],
+  'Press':       [{issue:'Hydraulic pressure loss',   action:'Check hydraulic fluid and seals'},
+                  {issue:'Die alignment drift',        action:'Recalibrate die alignment'}],
+  'Boiler':      [{issue:'Scale buildup',             action:'Descale heat exchanger'},
+                  {issue:'Pressure relief fault',      action:'Test and replace relief valve'}],
+};
+function getFailureInfo(asset) {
+  const entries = typeFailures[asset.type] || [{issue:'Abnormal wear detected', action:'Schedule inspection'}];
+  // pick deterministically based on asset id so it doesn't change on every render
+  return entries[asset.id.charCodeAt(asset.id.length-1) % entries.length];
+}
+
+// Predict a failure date based on health: lower health = sooner
+function predictDate(health) {
+  const daysOut = Math.round(5 + (health / 100) * 55); // 5–60 days
+  const d = new Date();
+  d.setDate(d.getDate() + daysOut);
+  return d.toLocaleDateString('en-US',{month:'short', day:'numeric'});
+}
+
+// Auto-generate alerts from asset health + status
+function deriveAlerts() {
+  const list = [];
+  assets.forEach(a => {
+    if (a.status === 'Offline') {
+      list.push({sev:'Critical', title:`${a.name} — Offline`, detail:`Asset is offline · Last seen ${fmtDate(a.date)}`});
+    } else if (a.health < 40) {
+      const f = getFailureInfo(a);
+      list.push({sev:'Critical', title:`${a.name} — Critical Health (${a.health}%)`, detail:`${f.issue} suspected · Immediate attention needed`});
+    } else if (a.health < 60) {
+      const f = getFailureInfo(a);
+      list.push({sev:'High', title:`${a.name} — Low Health Score (${a.health}%)`, detail:`${f.issue} · Monitor closely`});
+    } else if (a.health < 75) {
+      list.push({sev:'Medium', title:`${a.name} — Health Degrading (${a.health}%)`, detail:`Performance declining · Schedule check soon`});
+    } else if (a.status === 'Maintenance') {
+      list.push({sev:'Medium', title:`${a.name} — Under Maintenance`, detail:`Currently out of service · Work order may be open`});
+    }
+  });
+  // sort: Critical first, then High, then Medium
+  const order = {Critical:0, High:1, Medium:2};
+  list.sort((a,b) => (order[a.sev]||3) - (order[b.sev]||3));
+  return list;
+}
+
+// Auto-generate risk predictions for assets with health < 80
+function deriveRisk() {
+  return assets
+    .filter(a => a.health < 80 && a.status !== 'Offline')
+    .sort((a,b) => a.health - b.health)
+    .slice(0, 6)
+    .map(a => {
+      const f    = getFailureInfo(a);
+      const risk = a.health < 40 ? 'Critical' : a.health < 60 ? 'High' : 'Medium';
+      return {asset: a.name, issue: f.issue, risk, date: predictDate(a.health), action: f.action};
+    });
+}
+const sensorsData = [
+  {name:'Vibration',    asset:'CNC Mill #3',     val:18.4,unit:'mm/s',limit:12,  max:25,  sev:'Critical'},
+  {name:'Temperature',  asset:'CNC Mill #3',     val:94,  unit:'°C',  limit:80,  max:100, sev:'Critical'},
+  {name:'Motor Current',asset:'Conveyor Belt B1',val:32,  unit:'A',   limit:30,  max:50,  sev:'High'},
+  {name:'Pressure',     asset:'Pump Station #5', val:2.1, unit:'bar', limit:3.5, max:5,   sev:'High'},
+  {name:'RPM',          asset:'Industrial Fan F7',val:1480,unit:'rpm',limit:1750,max:2000,sev:'Medium'},
+  {name:'Temperature',  asset:'Compressor A2',   val:62,  unit:'°C',  limit:85,  max:100, sev:'OK'},
+];
+
+let woCounter = 106, assetCounter = 11;
+let editWOId = null, editAssetId = null;
+
+// ── NAVIGATION ───────────────────────────────────────────────────
+const meta = {
+  dashboard: ['Dashboard','Live overview · Last updated just now'],
+  sensors:   ['Sensors','Real-time readings from connected sensors'],
+  workorders:['Work Orders','Click any row to edit · Use button to add new'],
+  assets:    ['Assets','Click any row to edit · Use button to add new'],
+  reports:   ['Reports','Analytics and saved report files'],
+};
+function go(id, el) {
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('nav a').forEach(a=>a.classList.remove('active'));
+  document.getElementById('page-'+id).classList.add('active');
+  if(el) el.classList.add('active');
+  const [t,s]=meta[id];
+  document.getElementById('page-title').textContent=t;
+  document.getElementById('page-sub').textContent=s;
+  if(id==='sensors')  drawSensorHistory();
+  if(id==='reports')  drawReportCharts();
+}
+
+// ── TOAST ────────────────────────────────────────────────────────
+function toast(msg) {
+  const t=document.getElementById('toast');
+  t.textContent=msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2200);
+}
+
+// ── MODALS ───────────────────────────────────────────────────────
+function openModal(id)  { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+document.querySelectorAll('.modal-overlay').forEach(o=>
+  o.addEventListener('click',e=>{ if(e.target===o) o.classList.remove('open'); })
+);
+
+// ── HELPERS ──────────────────────────────────────────────────────
+const sevCls  = s=>({Critical:'b-crit',High:'b-high',Medium:'b-med',Low:'b-low',OK:'b-low'}[s]||'b-low');
+const statCls = s=>({'Open':'b-open','In Progress':'b-prog','Done':'b-done',Online:'b-online',Maintenance:'b-maint',Offline:'b-offline'}[s]||'');
+const hColor  = h=>h>=75?'var(--green)':h>=50?'var(--amber)':'var(--red)';
+function fmtDate(d) {
+  if(!d) return '—';
+  const [y,m,day]=d.split('-');
+  return ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'][+m-1]+' '+parseInt(day)+', '+y;
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────────
+function refreshKPIs() {
+  const online=assets.filter(a=>a.status==='Online').length;
+  const openWO=workOrders.filter(w=>w.status!=='Done').length;
+  const inProg=workOrders.filter(w=>w.status==='In Progress').length;
+  const avg=assets.length?Math.round(assets.reduce((s,a)=>s+a.health,0)/assets.length):0;
+  document.getElementById('kpi-online').textContent=online;
+  document.getElementById('kpi-total').textContent=assets.length;
+  document.getElementById('kpi-wo').textContent=openWO;
+  document.getElementById('kpi-wo-note').textContent=inProg+' in progress';
+  document.getElementById('kpi-health').textContent=avg+'%';
+
+  // live-derived alerts & risk from current asset data
+  const alerts=deriveAlerts();
+  const risks=deriveRisk();
+
+  document.getElementById('alert-chip').textContent=alerts.length+' active alert'+(alerts.length!==1?'s':'');
+  document.getElementById('sb-count').textContent=online;
+
+  const al=document.getElementById('alerts-list');
+  if(alerts.length===0){
+    al.innerHTML='<div style="padding:18px 0;text-align:center;color:var(--muted);font-size:13px;">✅ No active alerts — all assets healthy</div>';
+  } else {
+    al.innerHTML=alerts.map(a=>`<div class="alert-item">
+      <span class="badge ${sevCls(a.sev)}">${a.sev}</span>
+      <div class="alert-body"><div class="title">${a.title}</div><div class="detail">${a.detail}</div></div>
+    </div>`).join('');
+  }
+
+  const riskTbody=document.getElementById('risk-tbody');
+  if(risks.length===0){
+    riskTbody.innerHTML='<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:18px;">No assets currently at risk</td></tr>';
+  } else {
+    riskTbody.innerHTML=risks.map(r=>`<tr>
+      <td><b>${r.asset}</b></td><td>${r.issue}</td>
+      <td><span class="badge ${sevCls(r.risk)}">${r.risk}</span></td>
+      <td>${r.date}</td><td>${r.action}</td>
+    </tr>`).join('');
+  }
+}
+
+// ── SENSORS ──────────────────────────────────────────────────────
+function renderSensors() {
+  document.getElementById('sensor-grid').innerHTML=sensorsData.map(s=>{
+    const pct=Math.min(100,(s.val/s.max)*100);
+    const over=s.val>=s.limit;
+    const col=s.sev==='Critical'?'var(--red)':s.sev==='High'?'var(--amber)':s.sev==='Medium'?'var(--teal)':'var(--green)';
+    return `<div class="sensor-card">
+      <div class="sc-top"><span class="sc-name">${s.name}</span><span class="badge ${sevCls(s.sev==='OK'?'Low':s.sev)}">${s.sev}</span></div>
+      <div class="sc-asset">${s.asset}</div>
+      <div class="sc-val">${s.val}<span class="sc-unit"> ${s.unit}</span></div>
+      <div class="sc-bar"><div class="sc-fill" style="width:${pct}%;background:${col}"></div></div>
+      <div class="sc-range"><span>0</span><span style="color:${col}">Limit: ${s.limit} ${s.unit}</span><span>${s.max} ${s.unit}</span></div>
+    </div>`;
+  }).join('');
+}
+
+// ── WORK ORDERS ──────────────────────────────────────────────────
+function renderWO(list) {
+  list=list||workOrders;
+  document.getElementById('wo-body').innerHTML=list.map(w=>`<tr onclick="openWO('${w.id}')">
+    <td><b>${w.id}</b></td><td>${w.asset}</td><td>${w.issue}</td>
+    <td><span class="badge ${sevCls(w.priority)}">${w.priority}</span></td>
+    <td><span class="badge ${statCls(w.status)}">${w.status}</span></td>
+    <td>${w.tech||'—'}</td><td>${fmtDate(w.due)}</td>
+  </tr>`).join('');
+}
+function filterWO() {
+  const q=document.getElementById('wo-search').value.toLowerCase();
+  const st=document.getElementById('wo-status-f').value;
+  renderWO(workOrders.filter(w=>{
+    const mq=!q||[w.id,w.asset,w.issue,w.tech].join(' ').toLowerCase().includes(q);
+    const ms=!st||w.status===st;
+    return mq&&ms;
+  }));
+}
+function populateAssetSel() {
+  document.getElementById('wo-asset').innerHTML=assets.map(a=>`<option>${a.name}</option>`).join('');
+}
+function openWO(id) {
+  populateAssetSel(); editWOId=id;
+  const del=document.getElementById('wo-del-btn');
+  if(id) {
+    const w=workOrders.find(x=>x.id===id);
+    document.getElementById('wo-modal-title').textContent='Edit Work Order';
+    document.getElementById('wo-asset').value=w.asset;
+    document.getElementById('wo-issue').value=w.issue;
+    document.getElementById('wo-priority').value=w.priority;
+    document.getElementById('wo-status').value=w.status;
+    document.getElementById('wo-tech').value=w.tech||'';
+    document.getElementById('wo-due').value=w.due||'';
+    del.style.display='inline-flex';
+  } else {
+    document.getElementById('wo-modal-title').textContent='New Work Order';
+    ['wo-issue','wo-tech','wo-due'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('wo-priority').value='Medium';
+    document.getElementById('wo-status').value='Open';
+    del.style.display='none';
+  }
+  openModal('wo-modal');
+}
+function saveWO() {
+  const issue=document.getElementById('wo-issue').value.trim();
+  if(!issue){alert('Please describe the issue.');return;}
+  const obj={
+    id:editWOId||'WO-'+woCounter++,
+    asset:document.getElementById('wo-asset').value,
+    issue,
+    priority:document.getElementById('wo-priority').value,
+    status:document.getElementById('wo-status').value,
+    tech:document.getElementById('wo-tech').value.trim(),
+    due:document.getElementById('wo-due').value,
+  };
+  if(editWOId){workOrders[workOrders.findIndex(w=>w.id===editWOId)]=obj;toast('Work order updated.');}
+  else{workOrders.unshift(obj);toast('Work order created.');}
+  save(); closeModal('wo-modal'); renderWO(); refreshKPIs();
+}
+function deleteWO() {
+  if(!confirm('Delete this work order?'))return;
+  workOrders=workOrders.filter(w=>w.id!==editWOId);
+  save(); closeModal('wo-modal'); renderWO(); refreshKPIs(); toast('Work order deleted.');
+}
+
+// ── ASSETS ───────────────────────────────────────────────────────
+function renderAssets(list) {
+  list=list||assets;
+  document.getElementById('asset-body').innerHTML=list.map(a=>`<tr onclick="openAsset('${a.id}')">
+    <td><b>${a.id}</b></td><td>${a.name}</td><td>${a.type}</td><td>${a.loc}</td>
+    <td><span class="badge ${statCls(a.status)}">${a.status}</span></td>
+    <td><div class="hbar"><div class="hbar-track"><div class="hbar-fill" style="width:${a.health}%;background:${hColor(a.health)}"></div></div>
+    <span style="font-weight:600;color:${hColor(a.health)};font-size:12px">${a.health}%</span></div></td>
+    <td>${fmtDate(a.date)}</td>
+  </tr>`).join('');
+}
+function filterAssets() {
+  const q=document.getElementById('asset-search').value.toLowerCase();
+  const st=document.getElementById('asset-status-f').value;
+  renderAssets(assets.filter(a=>{
+    const mq=!q||[a.id,a.name,a.type,a.loc].join(' ').toLowerCase().includes(q);
+    const ms=!st||a.status===st;
+    return mq&&ms;
+  }));
+}
+function openAsset(id) {
+  editAssetId=id;
+  const del=document.getElementById('a-del-btn');
+  if(id) {
+    const a=assets.find(x=>x.id===id);
+    document.getElementById('asset-modal-title').textContent='Edit Asset';
+    document.getElementById('a-name').value=a.name;
+    document.getElementById('a-type').value=a.type;
+    document.getElementById('a-loc').value=a.loc;
+    document.getElementById('a-status').value=a.status;
+    document.getElementById('a-health').value=a.health;
+    document.getElementById('a-date').value=a.date||'';
+    del.style.display='inline-flex';
+  } else {
+    document.getElementById('asset-modal-title').textContent='Add Asset';
+    ['a-name','a-type','a-loc','a-health','a-date'].forEach(i=>document.getElementById(i).value='');
+    document.getElementById('a-status').value='Online';
+    del.style.display='none';
+  }
+  openModal('asset-modal');
+}
+function saveAsset() {
+  const name=document.getElementById('a-name').value.trim();
+  if(!name){alert('Please enter an asset name.');return;}
+  const health=Math.min(100,Math.max(0,parseInt(document.getElementById('a-health').value)||0));
+  const obj={
+    id:editAssetId||'A-'+String(assetCounter++).padStart(3,'0'),
+    name, health,
+    type:document.getElementById('a-type').value.trim()||'Unknown',
+    loc: document.getElementById('a-loc').value.trim()||'—',
+    status:document.getElementById('a-status').value,
+    date:document.getElementById('a-date').value,
+  };
+  if(editAssetId){assets[assets.findIndex(a=>a.id===editAssetId)]=obj;toast('Asset updated.');}
+  else{assets.push(obj);toast('Asset added.');}
+  save(); closeModal('asset-modal'); renderAssets(); refreshKPIs(); drawDashChart();
+}
+function deleteAsset() {
+  if(!confirm('Delete this asset?'))return;
+  assets=assets.filter(a=>a.id!==editAssetId);
+  save(); closeModal('asset-modal'); renderAssets(); refreshKPIs(); drawDashChart(); toast('Asset removed.');
+}
+
+// ── CHARTS ───────────────────────────────────────────────────────
+function lineChart(ctx,labels,data,color,opts={}) {
+  const W=ctx.canvas.width,H=ctx.canvas.height;
+  const P={t:16,r:16,b:32,l:46};
+  const w=W-P.l-P.r,h=H-P.t-P.b;
+  ctx.clearRect(0,0,W,H);
+  const mn=opts.min??Math.min(...data)*.88;
+  const mx=opts.max??Math.max(...data)*1.1;
+  ctx.strokeStyle='#e8eef2';ctx.lineWidth=1;
+  for(let i=0;i<=4;i++){
+    const y=P.t+h-(i/4)*h;
+    ctx.beginPath();ctx.moveTo(P.l,y);ctx.lineTo(P.l+w,y);ctx.stroke();
+    ctx.fillStyle='#9aabb8';ctx.font='10px Segoe UI';ctx.textAlign='right';
+    ctx.fillText((mn+(mx-mn)*i/4).toFixed(1),P.l-5,y+3);
+  }
+  if(opts.threshold!=null){
+    const ty=P.t+h-((opts.threshold-mn)/(mx-mn))*h;
+    ctx.save();ctx.strokeStyle='#c0392b';ctx.lineWidth=1.5;ctx.setLineDash([5,4]);
+    ctx.beginPath();ctx.moveTo(P.l,ty);ctx.lineTo(P.l+w,ty);ctx.stroke();
+    ctx.setLineDash([]);ctx.fillStyle='#c0392b';ctx.font='10px Segoe UI';ctx.textAlign='right';
+    ctx.fillText((opts.thresholdLabel||'Limit: '+opts.threshold),P.l+w,ty-4);ctx.restore();
+  }
+  const step=Math.ceil(labels.length/7);
+  ctx.fillStyle='#9aabb8';ctx.font='10px Segoe UI';ctx.textAlign='center';
+  labels.forEach((l,i)=>{if(i%step===0||i===labels.length-1)ctx.fillText(l,P.l+(i/(labels.length-1))*w,H-8);});
+  const pts=data.map((v,i)=>({x:P.l+(i/(data.length-1))*w,y:P.t+h-((v-mn)/(mx-mn))*h}));
+  ctx.beginPath();ctx.moveTo(pts[0].x,P.t+h);pts.forEach(p=>ctx.lineTo(p.x,p.y));
+  ctx.lineTo(pts[pts.length-1].x,P.t+h);ctx.closePath();
+  const g=ctx.createLinearGradient(0,P.t,0,P.t+h);
+  g.addColorStop(0,color+'38');g.addColorStop(1,color+'05');
+  ctx.fillStyle=g;ctx.fill();
+  ctx.beginPath();ctx.strokeStyle=color;ctx.lineWidth=2;
+  pts.forEach((p,i)=>i===0?ctx.moveTo(p.x,p.y):ctx.lineTo(p.x,p.y));ctx.stroke();
+  const lp=pts[pts.length-1];
+  ctx.beginPath();ctx.arc(lp.x,lp.y,5,0,Math.PI*2);ctx.fillStyle=color;ctx.fill();
+  ctx.beginPath();ctx.arc(lp.x,lp.y,3,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+}
+
+function donutChart(ctx,data,colors) {
+  const W=ctx.canvas.width,H=ctx.canvas.height,cx=W/2,cy=H/2;
+  const r=Math.min(W,H)/2-10,ri=r*.55;
+  ctx.clearRect(0,0,W,H);
+  const total=data.reduce((s,d)=>s+d.v,0);
+  let angle=-Math.PI/2;
+  data.forEach((d,i)=>{
+    const sl=(d.v/total)*Math.PI*2;
+    ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,angle,angle+sl);ctx.closePath();
+    ctx.fillStyle=colors[i];ctx.fill();
+    ctx.strokeStyle='#fff';ctx.lineWidth=2;ctx.stroke();
+    angle+=sl;
+  });
+  ctx.beginPath();ctx.arc(cx,cy,ri,0,Math.PI*2);ctx.fillStyle='#fff';ctx.fill();
+  ctx.fillStyle='#2c3e50';ctx.font='bold 15px Segoe UI';ctx.textAlign='center';
+  ctx.fillText(total,cx,cy+4);
+  ctx.fillStyle='#9aabb8';ctx.font='10px Segoe UI';ctx.fillText('alerts',cx,cy+17);
+}
+
+function drawDashChart() {
+  const c=document.getElementById('vib-chart');if(!c)return;
+  c.width=c.parentElement.clientWidth-40||500;
+
+  // Current average health from live asset data
+  const curAvg=assets.length?Math.round(assets.reduce((s,a)=>s+a.health,0)/assets.length):75;
+
+  // Simulate a 30-day degradation trend that ends at the real current average
+  // Days are D-29 … D-0 (today). Health was slightly higher in the past.
+  const labels=Array.from({length:30},(_,i)=>{
+    const d=new Date(); d.setDate(d.getDate()-(29-i));
+    return (i%5===0||i===29)?d.toLocaleDateString('en-US',{month:'short',day:'numeric'}):'';
+  });
+  // Simulate a realistic trend: start ~8-12 pts above current, with small daily noise
+  const seed=assets.reduce((s,a)=>s+a.id.charCodeAt(a.id.length-1),0)%100;
+  const startOffset=8+((seed%5));
+  const data=Array.from({length:30},(_,i)=>{
+    const progress=i/29; // 0→1
+    const base=Math.min(99,curAvg+startOffset*(1-progress));
+    const noise=(Math.sin(i*2.3+seed)*1.5);
+    return Math.min(99,Math.max(10,Math.round(base+noise)));
+  });
+  data[29]=curAvg; // pin last point to exact live average
+
+  // Color: green if healthy (>=75), amber if degrading (<75), red if critical (<50)
+  const col=curAvg>=75?'#1e8449':curAvg>=50?'#d68910':'#c0392b';
+  const threshold=75; // "healthy" line
+
+  lineChart(c.getContext('2d'),labels,data,col,{min:0,max:100,threshold,thresholdLabel:'Healthy: 75%'});
+
+  // Update hint with live stat
+  const hint=document.getElementById('chart-hint');
+  if(hint) hint.textContent=`Fleet avg: ${curAvg}% health · live from ${assets.length} asset${assets.length!==1?'s':''}`;
+}
+function drawSensorHistory() {
+  const c=document.getElementById('sensor-chart');if(!c)return;
+  c.width=c.parentElement.clientWidth-40||700;
+  const hrs=Array.from({length:25},(_,i)=>i+':00');
+  const vib=[4.1,3.9,4.3,4.5,4.2,5.1,5.6,6.2,7.8,8.1,7.5,8.9,9.4,10.2,11.1,12.8,13.5,14.2,15.1,16.4,17.1,17.8,18.4,18.4,18.4];
+  lineChart(c.getContext('2d'),hrs,vib,'#c0392b',{min:0,max:22,threshold:12});
+}
+function drawReportCharts() {
+  const cc=document.getElementById('cost-chart');
+  if(cc){cc.width=cc.parentElement.clientWidth-40||360;
+    lineChart(cc.getContext('2d'),['Oct','Nov','Dec','Jan','Feb','Mar'],[42000,51000,38000,55000,44000,31000],'#1e3a5f',{min:20000});}
+  const dc=document.getElementById('donut-chart');
+  if(dc){dc.width=dc.parentElement.clientWidth-40||200;
+    const d=[{label:'Vibration',v:12},{label:'Thermal',v:8},{label:'Pressure',v:6},{label:'Current',v:5},{label:'Other',v:4}];
+    const cols=['#1e3a5f','#2d7d9a','#3cb8a0','#d68910','#c0392b'];
+    donutChart(dc.getContext('2d'),d,cols);
+    document.getElementById('donut-legend').innerHTML=d.map((x,i)=>
+      `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px;">
+        <span style="width:10px;height:10px;border-radius:50%;background:${cols[i]};display:inline-block;flex-shrink:0;"></span>
+        ${x.label} — ${x.v} alerts</div>`).join('');
+  }
+}
+
+// ── INIT ─────────────────────────────────────────────────────────
+window.addEventListener('load',()=>{
+  // sync ID counters with whatever is already saved
+  save();
+  refreshKPIs(); renderSensors(); renderWO(); renderAssets(); drawDashChart();
+});
+window.addEventListener('resize',()=>{
+  drawDashChart();
+  if(document.getElementById('page-sensors').classList.contains('active')) drawSensorHistory();
+  if(document.getElementById('page-reports').classList.contains('active')) drawReportCharts();
+});
+</script>
+</body>
+</html>
