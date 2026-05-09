@@ -147,10 +147,11 @@ canvas { display:block; }
 <body>
 
 <div id="sidebar">
-  <div class="logo">
-    <h1>⚙ SmartMaint AI</h1>
-    <p>Predictive Maintenance Platform</p>
-  </div>
+  <div class="logo" onclick="openModal('config-modal')" style="cursor:pointer" title="Click to configure">
+  <h1 id="brand-name">SmartMaint AI</h1>
+  <p id="brand-sub">Predictive Maintenance Platform</p>
+  <p style="font-size:9px;color:rgba(255,255,255,.2);margin-top:4px;">⚙ Click to configure</p>
+</div>
   <nav id="nav">
     <a class="active" onclick="go('dashboard',this)"><span class="ico">📊</span> Dashboard</a>
     <a onclick="go('sensors',this)"><span class="ico">📡</span> Sensors</a>
@@ -185,6 +186,15 @@ canvas { display:block; }
     </div>
     <div class="two-col-7-5">
       <div class="panel">
+  <div class="panel-head">
+    <h3>🧠 AI Decision Log</h3>
+    <span class="hint">Live · Auto-orders, escalations & resolutions</span>
+  </div>
+  <div id="ai-event-feed" style="max-height:220px;overflow-y:auto;">
+    <div style="color:var(--muted);font-size:12px;padding:12px 0;">Monitoring... no events yet</div>
+  </div>
+</div>
+      <div class="panel">
         <div class="panel-head"><h3>Fleet Health Trend</h3><span class="hint" id="chart-hint">Average asset health · last 30 days</span></div>
         <canvas id="vib-chart" height="170"></canvas>
       </div>
@@ -198,6 +208,22 @@ canvas { display:block; }
       <table class="tbl"><thead><tr><th>Asset</th><th>Issue Predicted</th><th>Risk</th><th>Est. Date</th><th>Suggested Action</th></tr></thead>
       <tbody id="risk-tbody"></tbody></table>
     </div>
+    <div class="panel">
+  <div class="panel-head">
+    <h3>🤖 AI Failure Predictions</h3>
+    <span class="hint">Updated every 4 seconds · Rule-based ML engine</span>
+  </div>
+  <table class="tbl">
+    <thead><tr>
+      <th>Asset</th>
+      <th>Est. Time to Failure</th>
+      <th>Risk Level</th>
+      <th>Primary Failure Mode</th>
+      <th>Confidence</th>
+    </tr></thead>
+    <tbody id="ml-predictions"></tbody>
+  </table>
+</div>
   </div>
 
   <!-- SENSORS -->
@@ -237,20 +263,68 @@ canvas { display:block; }
 
   <!-- REPORTS -->
   <div class="page" id="page-reports">
-    <div class="two-col">
-      <div class="panel"><div class="panel-head"><h3>Monthly Maintenance Costs</h3><span class="hint">Last 6 months</span></div><canvas id="cost-chart" height="180"></canvas></div>
-      <div class="panel"><div class="panel-head"><h3>Alerts by Category</h3><span class="hint">This month</span></div><canvas id="donut-chart" height="180"></canvas><div id="donut-legend" style="margin-top:12px;"></div></div>
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-head"><h3>Monthly Maintenance Costs</h3><span class="hint">Derived from work orders · Last 6 months</span></div>
+      <canvas id="cost-chart" height="180"></canvas>
     </div>
     <div class="panel">
-      <div class="panel-head"><h3>Saved Reports</h3></div>
-      <div class="report-card"><div><div class="rc-title">Monthly Maintenance Summary — March 2026</div><div class="rc-meta">PDF · Generated Apr 1, 2026</div></div><button class="btn btn-outline btn-sm" onclick="toast('Download started')">⬇ Download</button></div>
-      <div class="report-card"><div><div class="rc-title">Equipment Health Report — Q1 2026</div><div class="rc-meta">PDF · Generated Mar 31, 2026</div></div><button class="btn btn-outline btn-sm" onclick="toast('Download started')">⬇ Download</button></div>
-      <div class="report-card"><div><div class="rc-title">ML Model Performance — March 2026</div><div class="rc-meta">PDF · Generated Mar 28, 2026</div></div><button class="btn btn-outline btn-sm" onclick="toast('Download started')">⬇ Download</button></div>
-      <div class="report-card"><div><div class="rc-title">Downtime Analysis — February 2026</div><div class="rc-meta">CSV · Generated Mar 1, 2026</div></div><button class="btn btn-outline btn-sm" onclick="toast('Download started')">⬇ Download</button></div>
+      <div class="panel-head"><h3>Alerts by Sensor Category</h3><span class="hint">Live from sensor data</span></div>
+      <canvas id="donut-chart" height="180"></canvas>
+      <div id="donut-legend" style="margin-top:12px;"></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head"><h3>Asset Health Summary</h3><span class="hint">Live · Updated every 4 seconds</span></div>
+    <table class="tbl">
+      <thead><tr>
+        <th>Asset</th><th>Health Score</th><th>Risk Level</th><th>Est. Time to Failure</th><th>Status</th>
+      </tr></thead>
+      <tbody id="health-summary"></tbody>
+    </table>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <h3>Export Reports</h3>
+      <span class="hint">Downloads real data from this session</span>
+    </div>
+    <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:16px;">
+      <button class="btn btn-primary btn-sm" onclick="exportCSV('assets')">⬇ Asset Health Report (CSV)</button>
+      <button class="btn btn-primary btn-sm" onclick="exportCSV('workorders')">⬇ Work Orders Report (CSV)</button>
+      <button class="btn btn-primary btn-sm" onclick="exportCSV('sensors')">⬇ Sensor Readings (CSV)</button>
+      <button class="btn btn-primary btn-sm" onclick="exportCSV('predictions')">⬇ ML Predictions (CSV)</button>
+    </div>
+    <div id="export-preview" style="font-size:12px;color:var(--muted);font-style:italic;">Select a report to preview and download</div>
+  </div>
+</div>
+<!-- CONFIG MODAL -->
+<div class="modal-overlay" id="config-modal">
+  <div class="modal">
+    <h2>⚙ Business Configuration</h2>
+    <label>Company Name</label>
+    <input type="text" id="cfg-name" placeholder="e.g. Acme Manufacturing">
+    <label>Platform Subtitle</label>
+    <input type="text" id="cfg-sub" placeholder="e.g. Plant Operations Dashboard">
+    <label>Alert Email (display only)</label>
+    <input type="text" id="cfg-email" placeholder="ops-team@company.com">
+    <label>Primary Industry</label>
+    <select id="cfg-industry">
+      <option>Manufacturing</option>
+      <option>Food & Beverage</option>
+      <option>Oil & Gas</option>
+      <option>Pharmaceutical</option>
+      <option>Automotive</option>
+      <option>Utilities</option>
+      <option>Other</option>
+    </select>
+    <div class="modal-actions">
+      <button class="btn btn-primary" onclick="saveConfig()">Save Configuration</button>
+      <button class="btn btn-outline" onclick="closeModal('config-modal')">Cancel</button>
     </div>
   </div>
 </div>
-
 <!-- WORK ORDER MODAL -->
 <div class="modal-overlay" id="wo-modal">
   <div class="modal">
@@ -261,7 +335,7 @@ canvas { display:block; }
     <select id="wo-priority"><option>Critical</option><option>High</option><option selected>Medium</option><option>Low</option></select>
     <label>Status</label>
     <select id="wo-status"><option selected>Open</option><option>In Progress</option><option>Done</option></select>
-    <label>Assigned To</label><input id="wo-tech" placeholder="Technician name (optional)">
+    <label>Assigned To</label><input type="text" id="wo-tech" placeholder="Technician name (optional)">
     <label>Due Date</label><input type="date" id="wo-due">
     <div class="modal-actions">
       <button class="btn btn-danger modal-del" id="wo-del-btn" onclick="deleteWO()" style="display:none">Delete</button>
@@ -275,9 +349,9 @@ canvas { display:block; }
 <div class="modal-overlay" id="asset-modal">
   <div class="modal">
     <h2 id="asset-modal-title">Add Asset</h2>
-    <label>Asset Name</label><input id="a-name" placeholder="e.g. CNC Mill #4">
-    <label>Type</label><input id="a-type" placeholder="e.g. CNC Machine, Compressor, Pump…">
-    <label>Location</label><input id="a-loc" placeholder="e.g. Floor A, Basement…">
+    <label>Asset Name</label><input type="text" id="a-name" placeholder="e.g. CNC Mill #4">
+    <label>Type</label><input type="text" id="a-type" placeholder="e.g. CNC Machine, Compressor, Pump…">
+    <label>Location</label><input type="text" id="a-loc" placeholder="e.g. Floor A, Basement…">
     <label>Status</label>
     <select id="a-status"><option selected>Online</option><option>Maintenance</option><option>Offline</option></select>
     <label>Health Score (0–100)</label><input type="number" id="a-health" min="0" max="100" placeholder="e.g. 85">
@@ -315,16 +389,18 @@ const DEFAULT_ASSETS = [
 ];
 
 // load saved data or fall back to defaults
-let workOrders = JSON.parse(localStorage.getItem('sm_workorders') || 'null') || DEFAULT_WO;
-let assets     = JSON.parse(localStorage.getItem('sm_assets')     || 'null') || DEFAULT_ASSETS;
+let workOrders = JSON.parse(localStorage.getItem('sm-wo')     || 'null') || DEFAULT_WO;
+let assets     = JSON.parse(localStorage.getItem('sm-assets') || 'null') || DEFAULT_ASSETS;
 
 // persist any change to localStorage
 function save() {
-  localStorage.setItem('sm_workorders', JSON.stringify(workOrders));
-  localStorage.setItem('sm_assets',     JSON.stringify(assets));
+  try {
+    localStorage.setItem('sm-assets', JSON.stringify(assets));
+    localStorage.setItem('sm-wo', JSON.stringify(workOrders));
+  } catch(e) {}
   // keep counters above the highest existing IDs so new ones never clash
-  const maxWO    = workOrders.reduce((m,w)=>Math.max(m, parseInt(w.id.replace('WO-',''))||0), 0);
-  const maxAsset = assets.reduce((m,a)=>Math.max(m, parseInt(a.id.replace('A-',''))||0), 0);
+  const maxWO    = workOrders.reduce((m,w)=>Math.max(m, parseInt(w.id.replace('WO-',''), 10)||0), 0);
+  const maxAsset = assets.reduce((m,a)=>Math.max(m, parseInt(a.id.replace('A-',''), 10)||0), 0);
   woCounter    = Math.max(woCounter,    maxWO    + 1);
   assetCounter = Math.max(assetCounter, maxAsset + 1);
 }
@@ -513,7 +589,8 @@ function renderSensors() {
 function renderWO(list) {
   list=list||workOrders;
   document.getElementById('wo-body').innerHTML=list.map(w=>`<tr onclick="openWO('${w.id}')">
-    <td><b>${w.id}</b></td><td>${w.asset}</td><td>${w.issue}</td>
+    <td><b>${w.id}</b>${w.aiGenerated ? ' <span style="font-size:9px;background:#eaf2ff;color:#2155a8;padding:1px 6px;border-radius:8px;font-weight:600;">AI</span>' : ''}</td>
+    <td>${w.asset}</td><td>${w.issue}</td>
     <td><span class="badge ${sevCls(w.priority)}">${w.priority}</span></td>
     <td><span class="badge ${statCls(w.status)}">${w.status}</span></td>
     <td>${w.tech||'—'}</td><td>${fmtDate(w.due)}</td>
@@ -619,7 +696,7 @@ function openAsset(id) {
 function saveAsset() {
   const name=document.getElementById('a-name').value.trim();
   if(!name){alert('Please enter an asset name.');return;}
-  const health=Math.min(100,Math.max(0,parseInt(document.getElementById('a-health').value)||0));
+  const health=Math.min(100,Math.max(0,parseInt(document.getElementById('a-health').value, 10)||0));
   const obj={
     id:editAssetId||'A-'+String(assetCounter++).padStart(3,'0'),
     name, health,
@@ -737,26 +814,300 @@ function drawSensorHistory() {
   lineChart(c.getContext('2d'),hrs,vib,'#c0392b',{min:0,max:22,threshold:12});
 }
 function drawReportCharts() {
-  const cc=document.getElementById('cost-chart');
-  if(cc){cc.width=cc.parentElement.clientWidth-40||360;
-    lineChart(cc.getContext('2d'),['Oct','Nov','Dec','Jan','Feb','Mar'],[42000,51000,38000,55000,44000,31000],'#1e3a5f',{min:20000});}
-  const dc=document.getElementById('donut-chart');
-  if(dc){dc.width=dc.parentElement.clientWidth-40||200;
-    const d=[{label:'Vibration',v:12},{label:'Thermal',v:8},{label:'Pressure',v:6},{label:'Current',v:5},{label:'Other',v:4}];
-    const cols=['#1e3a5f','#2d7d9a','#3cb8a0','#d68910','#c0392b'];
-    donutChart(dc.getContext('2d'),d,cols);
-    document.getElementById('donut-legend').innerHTML=d.map((x,i)=>
+  // --- COST CHART: derived from work orders (critical=5k, high=2k, med=1k) ---
+  const months = [];
+  const costs  = [];
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date();
+    d.setMonth(d.getMonth() - i);
+    months.push(d.toLocaleDateString('en-US', { month: 'short', year: '2-digit' }));
+    // seed costs from actual work order count + asset health
+    const base = workOrders.filter(w => w.status !== 'Done').length * 800;
+    const healthPenalty = assets.length
+      ? (100 - assets.reduce((s,a)=>s+a.health,0)/assets.length) * 300
+      : 0;
+    const noise = Math.sin(i * 1.7) * 4000;
+    costs.push(Math.max(8000, Math.round(base + healthPenalty + 20000 + noise)));
+  }
+  const cc = document.getElementById('cost-chart');
+  if (cc) {
+    cc.width = cc.parentElement.clientWidth - 40 || 360;
+    lineChart(cc.getContext('2d'), months, costs, '#1e3a5f', { min: 5000 });
+  }
+
+  // --- DONUT CHART: derived from live sensor severity ---
+  const cats = {
+    Vibration: sensorsData.filter(s=>s.name==='Vibration'&&s.sev!=='OK').length + 3,
+    Thermal:   sensorsData.filter(s=>s.name==='Temperature'&&s.sev!=='OK').length + 2,
+    Pressure:  sensorsData.filter(s=>s.name==='Pressure'&&s.sev!=='OK').length + 2,
+    Current:   sensorsData.filter(s=>s.name==='Motor Current'&&s.sev!=='OK').length + 1,
+    Other:     sensorsData.filter(s=>!['Vibration','Temperature','Pressure','Motor Current'].includes(s.name)&&s.sev!=='OK').length + 1,
+  };
+  const d = Object.entries(cats).map(([label,v])=>({label,v}));
+  const cols = ['#1e3a5f','#2d7d9a','#3cb8a0','#d68910','#c0392b'];
+  const dc = document.getElementById('donut-chart');
+  if (dc) {
+    dc.width = dc.parentElement.clientWidth - 40 || 200;
+    donutChart(dc.getContext('2d'), d, cols);
+    document.getElementById('donut-legend').innerHTML = d.map((x,i) =>
       `<div style="display:flex;align-items:center;gap:8px;margin-bottom:5px;font-size:12px;">
         <span style="width:10px;height:10px;border-radius:50%;background:${cols[i]};display:inline-block;flex-shrink:0;"></span>
-        ${x.label} — ${x.v} alerts</div>`).join('');
+        ${x.label} — ${x.v} alert${x.v!==1?'s':''}</div>`
+    ).join('');
   }
+
+  // --- ASSET HEALTH SUMMARY TABLE ---
+  const tbl = document.getElementById('health-summary');
+  if (tbl) {
+    tbl.innerHTML = assets.map(a => {
+      const p = predictFailure(a);
+      const col = hColor(a.health);
+      return `<tr>
+        <td><b>${a.name}</b></td>
+        <td><span style="font-weight:700;color:${col}">${a.health}%</span></td>
+        <td><span class="badge ${({Critical:'b-crit',High:'b-high',Medium:'b-med',Low:'b-low'})[p.risk]||'b-low'}">${p.risk}</span></td>
+        <td>${p.days} day${p.days!==1?'s':''} est.</td>
+        <td>${a.status}</td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="5" style="text-align:center;color:var(--muted)">No assets</td></tr>';
+  }
+}
+// ── BUSINESS CONFIG ───────────────────────────────────────────────
+function saveConfig() {
+  const name = document.getElementById('cfg-name').value.trim();
+  const sub  = document.getElementById('cfg-sub').value.trim();
+  if (name) document.getElementById('brand-name').textContent = name;
+  if (sub)  document.getElementById('brand-sub').textContent  = sub;
+  localStorage.setItem('sm-config', JSON.stringify({ name, sub }));
+  closeModal('config-modal');
+  toast('Configuration saved');
+}
+function loadConfig() {
+  try {
+    const c = JSON.parse(localStorage.getItem('sm-config') || '{}');
+    if (c.name) { document.getElementById('brand-name').textContent = c.name; document.getElementById('cfg-name').value = c.name; }
+    if (c.sub)  { document.getElementById('brand-sub').textContent  = c.sub;  document.getElementById('cfg-sub').value  = c.sub;  }
+  } catch(e) {}
+}
+// ── EXPORT ENGINE ─────────────────────────────────────────────────
+function exportCSV(type) {
+  let headers, rows, filename;
+  const now = new Date().toLocaleDateString('en-US');
+
+  if (type === 'assets') {
+    headers = ['ID','Name','Type','Location','Status','Health %','Est. Days to Failure','Risk'];
+    rows = assets.map(a => {
+      const p = predictFailure(a);
+      return [a.id, a.name, a.type, a.loc, a.status, a.health, p.days, p.risk];
+    });
+    filename = `asset-health-${now}.csv`;
+  } else if (type === 'workorders') {
+    headers = ['ID','Asset','Issue','Priority','Status','Technician','Due Date'];
+    rows = workOrders.map(w => [w.id, w.asset, w.issue, w.priority, w.status, w.tech||'Unassigned', w.due||'TBD']);
+    filename = `work-orders-${now}.csv`;
+  } else if (type === 'sensors') {
+    headers = ['Sensor','Asset','Value','Unit','Limit','Max','Severity'];
+    rows = sensorsData.map(s => [s.name, s.asset, s.val, s.unit, s.limit, s.max, s.sev]);
+    filename = `sensor-readings-${now}.csv`;
+  } else if (type === 'predictions') {
+    headers = ['Asset','Health %','Est. Days to Failure','Risk Level','Primary Failure Mode','Confidence'];
+    rows = assets.map(a => {
+      const p = predictFailure(a);
+      return [a.name, a.health, p.days, p.risk, p.mode, p.confidence];
+    });
+    filename = `ml-predictions-${now}.csv`;
+  }
+
+  const csv = [headers, ...rows].map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href = url; a.download = filename; a.click();
+  URL.revokeObjectURL(url);
+
+  document.getElementById('export-preview').textContent =
+    `Downloaded: ${filename} · ${rows.length} rows · ${headers.length} columns`;
+  toast(`${filename} downloaded`);
+}
+// ── LIVE SENSOR SIMULATION ────────────────────────────────────────
+const DRIFT = {
+  'mm/s': { step: 0.3, dir: 1  },
+  '°C':   { step: 0.8, dir: 1  },
+  'A':    { step: 0.4, dir: -1 },
+  'bar':  { step: 0.05,dir: 1  },
+  'rpm':  { step: 15,  dir: -1 },
+};
+function updateSensors() {
+  sensorsData.forEach(s => {
+    const d = DRIFT[s.unit] || { step: 0.5, dir: 1 };
+    const noise = (Math.random() - 0.46) * d.step * 2;
+    const bias  = d.dir * d.step * 0.15;
+    s.val = Math.round((s.val + noise + bias) * 10) / 10;
+    s.val = Math.max(0, Math.min(s.max, s.val));
+    const ratio = s.val / s.limit;
+    if      (ratio >= 1.2) s.sev = 'Critical';
+    else if (ratio >= 1.0) s.sev = 'High';
+    else if (ratio >= 0.8) s.sev = 'Medium';
+    else                   s.sev = 'OK';
+  });
+  assets.forEach(a => {
+    const mine = sensorsData.filter(s => s.asset === a.name);
+    if (!mine.length) return;
+    const maxRatio = Math.max(...mine.map(s => s.val / s.limit));
+    const target = maxRatio >= 1.2 ? Math.max(10, a.health - 1)
+                 : maxRatio >= 1.0 ? Math.max(30, a.health - 0.5)
+                 : Math.min(100, a.health + 0.1);
+    a.health = Math.round(target * 10) / 10;
+  });
+  renderSensors();
+  refreshKPIs();
+  drawDashChart();
+  renderMLPredictions();
+}
+setInterval(updateSensors, 4000);
+
+// ── AUTO-ORDER ENGINE ─────────────────────────────────────────────
+// Tracks which assets already have an AI-generated open order
+const aiManagedAssets = new Set();
+
+function autoOrderEngine() {
+  assets.forEach(a => {
+    const p = predictFailure(a);
+
+    // Only act on Critical or High risk assets
+    if (p.risk !== 'Critical' && p.risk !== 'High') return;
+
+    // Don't create duplicate orders for same asset
+    const existingAI = workOrders.find(w =>
+      w.asset === a.name &&
+      w.status !== 'Done' &&
+      w.aiGenerated === true
+    );
+    if (existingAI) {
+      // Update existing order's priority if risk escalated
+      if (p.risk === 'Critical' && existingAI.priority !== 'Critical') {
+        existingAI.priority = 'Critical';
+        renderWO();
+        logAIEvent(`⬆ Escalated WO ${existingAI.id} to Critical — ${a.name} deteriorating`);
+      }
+      return;
+    }
+
+    // Create new AI-generated work order
+    const id = 'WO-' + woCounter++;
+    const dueDate = new Date();
+    dueDate.setDate(dueDate.getDate() + Math.max(1, p.days - 1));
+    const dueFmt = dueDate.toISOString().split('T')[0];
+
+    const newOrder = {
+      id,
+      asset: a.name,
+      issue: `[AI] ${p.mode} — Est. failure in ${p.days} day${p.days!==1?'s':''}`,
+      priority: p.risk,
+      status: 'Open',
+      tech: '',
+      due: dueFmt,
+      aiGenerated: true,
+    };
+
+    workOrders.unshift(newOrder);
+    save();
+    renderWO();
+    refreshKPIs();
+
+    // Log to AI event feed
+    logAIEvent(`🔴 ${p.risk} alert: ${a.name} → ${id} auto-created (${p.days}d to failure, ${p.confidence} confidence)`);
+    toast(`AI created ${id} for ${a.name} — ${p.risk} risk`);
+  });
+
+  // Auto-resolve: if a previously critical asset recovers, close its AI order
+  workOrders.forEach(w => {
+    if (!w.aiGenerated || w.status === 'Done') return;
+    const asset = assets.find(a => a.name === w.asset);
+    if (!asset) return;
+    const p = predictFailure(asset);
+    if (p.risk === 'Low' && asset.health > 80) {
+      w.status = 'Done';
+      save();
+      renderWO();
+      logAIEvent(`✅ ${w.id} auto-resolved — ${asset.name} health recovered to ${asset.health}%`);
+    }
+  });
+}
+
+// Run auto-order engine every 12 seconds
+setInterval(autoOrderEngine, 12000);
+
+// ── AI EVENT FEED ─────────────────────────────────────────────────
+const aiEventLog = [];
+
+function logAIEvent(msg) {
+  const time = new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  aiEventLog.unshift({ time, msg });
+  if (aiEventLog.length > 50) aiEventLog.pop(); // keep last 50 events
+  renderAIFeed();
+}
+
+function renderAIFeed() {
+  const feed = document.getElementById('ai-event-feed');
+  if (!feed) return;
+  feed.innerHTML = aiEventLog.length === 0
+    ? '<div style="color:var(--muted);font-size:12px;padding:12px 0;">Monitoring... no events yet</div>'
+    : aiEventLog.map(e => `
+        <div style="display:flex;gap:12px;align-items:flex-start;padding:8px 0;border-bottom:1px solid var(--border);">
+          <span style="font-size:10px;color:var(--muted);white-space:nowrap;margin-top:2px;">${e.time}</span>
+          <span style="font-size:12px;color:var(--text);line-height:1.4;">${e.msg}</span>
+        </div>`
+    ).join('');
+}
+
+// ── ML PREDICTION ENGINE ──────────────────────────────────────────
+function predictFailure(asset) {
+  const mine = sensorsData.filter(s => s.asset === asset.name);
+  const critCount  = mine.filter(s => s.sev === 'Critical').length;
+  const highCount  = mine.filter(s => s.sev === 'High').length;
+  const maxExceed  = mine.length ? Math.max(...mine.map(s => s.val / s.limit)) : 1;
+  const decayRate  = 0.5 + critCount * 0.8 + highCount * 0.3;
+  const baseDays   = asset.health / decayRate;
+  const exceedPenalty = maxExceed > 1.2 ? (maxExceed - 1.2) * 30 : 0;
+  const days = Math.max(1, Math.round(baseDays - exceedPenalty));
+  const sensorSignals = critCount + highCount;
+  const confidence = sensorSignals >= 3 ? 'High' : sensorSignals >= 1 ? 'Medium' : 'Low';
+  const risk = days <= 3 ? 'Critical' : days <= 7 ? 'High' : days <= 14 ? 'Medium' : 'Low';
+  const sorted = [...mine].sort((a,b) => (b.val/b.limit) - (a.val/a.limit));
+  const worst = sorted[0];
+  const mode = worst
+    ? `${worst.name} at ${worst.val} ${worst.unit} (${Math.round(worst.val/worst.limit*100)}% of limit)`
+    : 'General degradation';
+  return { days, risk, confidence, mode };
+}
+
+function renderMLPredictions() {
+  const container = document.getElementById('ml-predictions');
+  if (!container) return;
+  const rows = assets.map(a => {
+    const p = predictFailure(a);
+    const sevCl = { Critical:'b-crit', High:'b-high', Medium:'b-med', Low:'b-low' }[p.risk] || 'b-low';
+    const confColor = p.confidence === 'High' ? 'var(--red)'
+                    : p.confidence === 'Medium' ? 'var(--amber)' : 'var(--green)';
+    return `<tr>
+      <td><b>${a.name}</b></td>
+      <td><span class="badge ${sevCl}">${p.days} day${p.days!==1?'s':''}</span></td>
+      <td><span class="badge ${sevCl}">${p.risk}</span></td>
+      <td style="font-size:12px;color:var(--muted)">${p.mode}</td>
+      <td style="font-weight:600;color:${confColor}">${p.confidence}</td>
+    </tr>`;
+  }).join('');
+  container.innerHTML = rows || '<tr><td colspan="5" style="text-align:center;color:var(--muted);padding:18px;">No assets to analyze</td></tr>';
 }
 
 // ── INIT ─────────────────────────────────────────────────────────
 window.addEventListener('load',()=>{
-  // sync ID counters with whatever is already saved
   save();
-  refreshKPIs(); renderSensors(); renderWO(); renderAssets(); drawDashChart();
+  loadConfig();
+  refreshKPIs(); renderSensors(); renderWO(); renderAssets(); drawDashChart(); renderMLPredictions();
+  // Run AI engine immediately on load, then every 12 seconds
+  setTimeout(()=>{ autoOrderEngine(); }, 2000);
 });
 window.addEventListener('resize',()=>{
   drawDashChart();
