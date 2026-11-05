@@ -6,6 +6,31 @@ This repository now contains RelayOps. The former GitHub Pages demo redirects to
 
 RelayOps turns an equipment issue into assigned work, documented completion, and a verified repair. It is the full-stack successor to [SmartMaint AI](https://github.com/MuhammadB786/smartmaint-ai/tree/508b408328fb1849764c16af0645d10ee580a940), originally a single-file systems-analysis prototype.
 
+## Screenshots
+
+Captured from the deployed RelayOps application using the sample equipment and simulated readings. Click any image to view it at full size.
+
+### Operations overview
+
+![RelayOps operations overview with asset status, attention queue, work orders, signals, and activity](assets/relayops/overview.jpg)
+
+| Work orders | Equipment register |
+| --- | --- |
+| ![RelayOps work orders with priorities, assignments, due dates, and workflow status](assets/relayops/work-orders.jpg) | ![RelayOps asset register with equipment locations, criticality, status, and open tasks](assets/relayops/assets.jpg) |
+
+| Condition monitoring | Maintenance reports |
+| --- | --- |
+| ![RelayOps condition monitoring with simulated temperature and vibration readings and explainable thresholds](assets/relayops/condition-monitoring.jpg) | ![RelayOps maintenance reports showing verified repairs, recorded costs, labor, and data provenance](assets/relayops/reports.jpg) |
+
+<details>
+<summary>Model lab — benchmark evaluation and explainable inference</summary>
+
+![RelayOps model lab showing held-out metrics, a confusion matrix, inference controls, baseline comparison, and known limitations](assets/relayops/model-lab.jpg)
+
+The model lab presents a synthetic-data benchmark, not a validated production failure predictor. Metrics and limitations are displayed as measured.
+
+</details>
+
 ## What is implemented
 
 - Shared SQL-backed workspaces and authenticated identity through the private Sites host.
