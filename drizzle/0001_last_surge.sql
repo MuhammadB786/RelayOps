@@ -1,0 +1,1 @@
+CREATE UNIQUE INDEX `one_active_source` ON `records` (`workspace`, json_extract(`data`, '$.sourceId')) WHERE `kind` = 'order' AND json_extract(`data`, '$.sourceId') != '' AND json_extract(`data`, '$.status') != 'Done';

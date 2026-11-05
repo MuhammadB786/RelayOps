@@ -1,0 +1,451 @@
+{
+  "version": "relayops-cart-v1",
+  "dataset": "UCI AI4I 2020",
+  "source": "https://archive.ics.uci.edu/dataset/601/ai4i+2020+predictive+maintenance+dataset",
+  "citation": "AI4I 2020 Predictive Maintenance Dataset. (2020). UCI Machine Learning Repository. DOI: 10.24432/C5HS5C.",
+  "license": "CC BY 4.0",
+  "datasetSHA256": "dc6630cd9b1f0f853922fad78a1b6436570d3f1ec863f1dd5c4340ac56bc8a8e",
+  "method": "Class-weighted CART decision tree, numeric sensor features with derived temperature difference, power and wear × torque. No failure-mode labels or IDs used as features.",
+  "split": "Ordered holdout: first 6,000 rows train; next 2,000 validation; last 2,000 test. Model depth and threshold selected on validation F1; test evaluated once after selection.",
+  "limitations": [
+    "Synthetic benchmark, not field validation.",
+    "Class-weighted leaf scores are not calibrated failure probabilities.",
+    "Classifies the failure label at the observation; does not estimate remaining useful life.",
+    "Equipment identities and real service conditions are unavailable; cross-equipment generalization is not established.",
+    "The synthetic target is partly derived from known physical rules; performance does not establish real-world predictive accuracy."
+  ],
+  "training": {
+    "rows": 6000,
+    "positives": 255,
+    "positiveWeight": 22.529411764705884
+  },
+  "depth": 7,
+  "threshold": 0.8,
+  "validation": {
+    "tp": 30,
+    "fp": 95,
+    "tn": 1860,
+    "fn": 15,
+    "precision": 0.24,
+    "recall": 0.6666666666666666,
+    "f1": 0.3529411764705882,
+    "accuracy": 0.945,
+    "support": 2000,
+    "positives": 45
+  },
+  "test": {
+    "tp": 25,
+    "fp": 72,
+    "tn": 1889,
+    "fn": 14,
+    "precision": 0.25773195876288657,
+    "recall": 0.6410256410256411,
+    "f1": 0.3676470588235294,
+    "accuracy": 0.957,
+    "support": 2000,
+    "positives": 39
+  },
+  "baseline": {
+    "tp": 0,
+    "fp": 0,
+    "tn": 1961,
+    "fn": 39,
+    "precision": 0,
+    "recall": 0,
+    "f1": 0,
+    "accuracy": 0.9805,
+    "support": 2000,
+    "positives": 39
+  },
+  "candidates": [
+    {
+      "depth": 3,
+      "threshold": 0.2,
+      "f1": 0.17408906882591096
+    },
+    {
+      "depth": 3,
+      "threshold": 0.35,
+      "f1": 0.17408906882591096
+    },
+    {
+      "depth": 3,
+      "threshold": 0.5,
+      "f1": 0.17408906882591096
+    },
+    {
+      "depth": 3,
+      "threshold": 0.65,
+      "f1": 0.17801047120418848
+    },
+    {
+      "depth": 3,
+      "threshold": 0.8,
+      "f1": 0.17801047120418848
+    },
+    {
+      "depth": 5,
+      "threshold": 0.2,
+      "f1": 0.17586912065439675
+    },
+    {
+      "depth": 5,
+      "threshold": 0.35,
+      "f1": 0.2755905511811024
+    },
+    {
+      "depth": 5,
+      "threshold": 0.5,
+      "f1": 0.2755905511811024
+    },
+    {
+      "depth": 5,
+      "threshold": 0.65,
+      "f1": 0.32222222222222224
+    },
+    {
+      "depth": 5,
+      "threshold": 0.8,
+      "f1": 0.3258426966292135
+    },
+    {
+      "depth": 7,
+      "threshold": 0.2,
+      "f1": 0.18099547511312217
+    },
+    {
+      "depth": 7,
+      "threshold": 0.35,
+      "f1": 0.245398773006135
+    },
+    {
+      "depth": 7,
+      "threshold": 0.5,
+      "f1": 0.26755852842809363
+    },
+    {
+      "depth": 7,
+      "threshold": 0.65,
+      "f1": 0.3488372093023256
+    },
+    {
+      "depth": 7,
+      "threshold": 0.8,
+      "f1": 0.3529411764705882
+    }
+  ],
+  "tree": {
+    "probability": 0.5,
+    "samples": 6000,
+    "feature": 2,
+    "threshold": 1414.5,
+    "left": {
+      "probability": 0.787667029168865,
+      "samples": 1351,
+      "feature": 2,
+      "threshold": 1388.5,
+      "left": {
+        "probability": 0.8448011763985049,
+        "samples": 925,
+        "feature": 1,
+        "threshold": 309.75,
+        "left": {
+          "probability": 0.6420787929589271,
+          "samples": 461,
+          "feature": 6,
+          "threshold": 7970.948364455386,
+          "left": {
+            "probability": 0.2803464682200805,
+            "samples": 353,
+            "feature": 7,
+            "threshold": 9866.25,
+            "left": {
+              "probability": 0,
+              "samples": 321
+            },
+            "right": {
+              "probability": 0.8386861313868613,
+              "samples": 32
+            }
+          },
+          "right": {
+            "probability": 0.8874544852697782,
+            "samples": 108,
+            "feature": 3,
+            "threshold": 60.650000000000006,
+            "left": {
+              "probability": 0.6759618778679845,
+              "samples": 59
+            },
+            "right": {
+              "probability": 0.9522213814722733,
+              "samples": 49
+            }
+          }
+        },
+        "right": {
+          "probability": 0.9118452808036005,
+          "samples": 464,
+          "feature": 5,
+          "threshold": 9.200000000000017,
+          "left": {
+            "probability": 0.9497964978703266,
+            "samples": 287,
+            "feature": 5,
+            "threshold": 8.450000000000017,
+            "left": {
+              "probability": 0.9952100682487007,
+              "samples": 92,
+              "feature": 2,
+              "threshold": 1360,
+              "left": {
+                "probability": 1,
+                "samples": 61
+              },
+              "right": {
+                "probability": 0.9821657535843339,
+                "samples": 31
+              }
+            },
+            "right": {
+              "probability": 0.8803332854474932,
+              "samples": 195,
+              "feature": 5,
+              "threshold": 8.849999999999994,
+              "left": {
+                "probability": 0.9386615834978556,
+                "samples": 89,
+                "feature": 5,
+                "threshold": 8.650000000000006,
+                "left": {
+                  "probability": 0.9743222831703633,
+                  "samples": 51
+                },
+                "right": {
+                  "probability": 0.7260663507109005,
+                  "samples": 38
+                }
+              },
+              "right": {
+                "probability": 0.7420083952211818,
+                "samples": 106,
+                "feature": 6,
+                "threshold": 7632.357980226991,
+                "left": {
+                  "probability": 0,
+                  "samples": 71
+                },
+                "right": {
+                  "probability": 0.921596149989974,
+                  "samples": 35
+                }
+              }
+            }
+          },
+          "right": {
+            "probability": 0.6759618778679845,
+            "samples": 177,
+            "feature": 7,
+            "threshold": 9493.2,
+            "left": {
+              "probability": 0.32875536480686696,
+              "samples": 141,
+              "feature": 6,
+              "threshold": 7686.597577391219,
+              "left": {
+                "probability": 0,
+                "samples": 100
+              },
+              "right": {
+                "probability": 0.6401114206128133,
+                "samples": 41
+              }
+            },
+            "right": {
+              "probability": 0.9184652278177458,
+              "samples": 36
+            }
+          }
+        }
+      },
+      "right": {
+        "probability": 0.37389066382676606,
+        "samples": 426,
+        "feature": 7,
+        "threshold": 9096.349999999999,
+        "left": {
+          "probability": 0.10882227589146186,
+          "samples": 371,
+          "feature": 3,
+          "threshold": 54,
+          "left": {
+            "probability": 0,
+            "samples": 334
+          },
+          "right": {
+            "probability": 0.5628214548126378,
+            "samples": 37
+          }
+        },
+        "right": {
+          "probability": 0.8150863088200521,
+          "samples": 55
+        }
+      }
+    },
+    "right": {
+      "probability": 0.23924182827918056,
+      "samples": 4649,
+      "feature": 6,
+      "threshold": 4097.898693330282,
+      "left": {
+        "probability": 0.8595924230182242,
+        "samples": 117,
+        "feature": 6,
+        "threshold": 3539.8628262608836,
+        "left": {
+          "probability": 0.989459543246874,
+          "samples": 31
+        },
+        "right": {
+          "probability": 0,
+          "samples": 86
+        }
+      },
+      "right": {
+        "probability": 0.16357125648831555,
+        "samples": 4532,
+        "feature": 4,
+        "threshold": 201.5,
+        "left": {
+          "probability": 0.06564098507620102,
+          "samples": 4182,
+          "feature": 6,
+          "threshold": 7751.733265075647,
+          "left": {
+            "probability": 0.03229115435958688,
+            "samples": 4057,
+            "feature": 6,
+            "threshold": 6619.2676532728665,
+            "left": {
+              "probability": 0.014191492515191938,
+              "samples": 3132,
+              "feature": 7,
+              "threshold": 7276.65,
+              "left": {
+                "probability": 0.007351670921550186,
+                "samples": 3043,
+                "feature": 6,
+                "threshold": 5153.667556483424,
+                "left": {
+                  "probability": 0.03188743651652652,
+                  "samples": 685
+                },
+                "right": {
+                  "probability": 0,
+                  "samples": 2358
+                }
+              },
+              "right": {
+                "probability": 0.20383182543906334,
+                "samples": 89,
+                "feature": 5,
+                "threshold": 9.550000000000011,
+                "left": {
+                  "probability": 0,
+                  "samples": 59
+                },
+                "right": {
+                  "probability": 0.43721461187214616,
+                  "samples": 30
+                }
+              }
+            },
+            "right": {
+              "probability": 0.08912676711850603,
+              "samples": 925,
+              "feature": 2,
+              "threshold": 1454.5,
+              "left": {
+                "probability": 0.1980095644306579,
+                "samples": 369,
+                "feature": 1,
+                "threshold": 309.65,
+                "left": {
+                  "probability": 0,
+                  "samples": 181
+                },
+                "right": {
+                  "probability": 0.32875536480686696,
+                  "samples": 188
+                }
+              },
+              "right": {
+                "probability": 0,
+                "samples": 556
+              }
+            }
+          },
+          "right": {
+            "probability": 0.5720076808192873,
+            "samples": 125,
+            "feature": 6,
+            "threshold": 8227.07194152705,
+            "left": {
+              "probability": 0,
+              "samples": 94
+            },
+            "right": {
+              "probability": 0.8679184202007122,
+              "samples": 31
+            }
+          }
+        },
+        "right": {
+          "probability": 0.6438639596534333,
+          "samples": 350,
+          "feature": 7,
+          "threshold": 10000,
+          "left": {
+            "probability": 0.5640648011782032,
+            "samples": 313,
+            "feature": 7,
+            "threshold": 8645.599999999999,
+            "left": {
+              "probability": 0.6404682274247492,
+              "samples": 232,
+              "feature": 5,
+              "threshold": 11.25,
+              "left": {
+                "probability": 0.6754850088183422,
+                "samples": 201,
+                "feature": 4,
+                "threshold": 218.5,
+                "left": {
+                  "probability": 0.6152161214953271,
+                  "samples": 166
+                },
+                "right": {
+                  "probability": 0.8233608025797206,
+                  "samples": 35
+                }
+              },
+              "right": {
+                "probability": 0,
+                "samples": 31
+              }
+            },
+            "right": {
+              "probability": 0,
+              "samples": 81
+            }
+          },
+          "right": {
+            "probability": 0.8786642875350497,
+            "samples": 37
+          }
+        }
+      }
+    }
+  }
+}
